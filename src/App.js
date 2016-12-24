@@ -17,8 +17,10 @@ class App extends Component {
 		this.handleClick = this.handleClick.bind(this);
 		this.handleSearch = this.handleSearch.bind(this);
 		this.handleKeyChanged = this.handleKeyChanged.bind(this);
+		this.handleAuthenticationResult = this.handleAuthenticationResult.bind(this);
 		this.state = {
-			items: []
+			items: [],
+			username: ''
 		};
 	}
 	
@@ -32,15 +34,48 @@ class App extends Component {
 		};
 		firebase.initializeApp(config);
 		
-		this.firebaseRef = firebase.database().ref('items');
-		this.firebaseRef.on('value', (snapshot) => {
-			var items = [];
-			snapshot.forEach((data)=> {
-				items.push(data.val());
-			});
+		firebase.auth().onAuthStateChanged(function(user) {
+		  if ( user ) {
+			this.setState({username: user.displayName});
 			
-			this.setState({items});
-		});
+	  		this.firebaseRef = firebase.database().ref('items');
+	  		this.firebaseRef.on('value', (snapshot) => {
+	  			var items = [];
+	  			snapshot.forEach((data)=> {
+	  				const item = data.val();
+	  				item['price'] = +(parseFloat(item['retailPriceVAT'].replace(',', '.')).toFixed(2));
+	  				item['fifPctPrice'] = +((0.15*item['price']).toFixed(2));
+	  				item['eigPctPrice'] = +((0.18*item['price']).toFixed(2));
+	  				items.push(item);
+	  			});
+			
+	  			this.setState({items});
+	  		});
+		  } else {
+			  var provider = new firebase.auth.GoogleAuthProvider();
+			  firebase.auth().signInWithRedirect(provider);
+		  }
+		}.bind(this));
+		
+  		firebase.auth().getRedirectResult().then(this.handleAuthenticationResult).catch(function(error) {
+  		  // Handle Errors here.
+  		  var errorCode = error.code;
+  		  var errorMessage = error.message;
+  		  // The email of the user's account used.
+  		  var email = error.email;
+  		  // The firebase.auth.AuthCredential type that was used.
+  		  var credential = error.credential;
+	  
+  		  console.log(errorCode, errorMessage);
+  		});
+	}
+	
+	handleAuthenticationResult( result ) {
+	  // The signed-in user info.
+	  var user = result.user;
+	  if ( user ) {
+	  	  this.setState({username: user.displayName});
+	  }
 	}
 
 	handleClick() {
@@ -62,7 +97,7 @@ class App extends Component {
 		if (key) {
 			this.firebaseRef.orderByChild('Code').equalTo(key).on('value', (snapshot) => {
 				var items = [];
-				snapshot.forEach((data)=> {
+				snapshot.forEach((data)=> {					
 					items.push(data.val());
 				});
 			
@@ -91,34 +126,33 @@ class App extends Component {
 	
 	render() {
 		return (
-		  <div className="App">
-		    <div className="App-header">
-		      <img src={logo} className="App-logo" alt="logo" />
-		      <h2>Welcome to React</h2>
-		    </div>
-		    <div className="App-intro">
-				<form name="newItem">
-					Code: <input name="code" ref={(input) => { this.code = input; }} />
-					Name: <input name="name" ref={(input) => { this.name = input; }} />
-					Price:  <input name="price" ref={(input) => { this.price = input; }} />
-					<input type="button" value="Add" onClick={this.handleClick} />
-				</form>
-		    </div>
-			<div className="wrapper">
-		      <Table className="table"
-				id="demo-table"
-		        filterable={['Code', 'VmName']}
-		        noDataText={this.getNoDataText()}
-		        itemsPerPage={20}
-		        currentPage={0}
-		        sortable={true}
-		        data={this.state.items}>
-		        <Thead>
-		          <Th column="Code">Code</Th>
-		          <Th column="VmName">Name</Th>
-		          <Th column="retailPriceVAT">Price</Th>
-		        </Thead>
-		      </Table>			
+		  <div className="container">
+			<div className="row">
+			    <div className="col-xs-12 col-md-12 App-header">
+			      <img src={logo} className="App-logo" alt="logo" />
+			      <h2>Welcome to Inventory Search, {this.state.username}</h2>
+			    </div>
+			</div>
+		    <div className="row">
+				<div className="col-xs-12 col-md-12">
+					<div className="table-responsive">
+				      <Table className="table table-striped"
+						filterable={['Code', 'VmName']}
+				        noDataText={this.getNoDataText()}
+				        itemsPerPage={20}
+				        currentPage={0}
+				        sortable={true}
+				        data={this.state.items}>
+				        <Thead>
+				          <Th column="Code">Code</Th>
+				          <Th column="VmName">Name</Th>
+				          <Th column="price">Price</Th>
+						  <Th column="fifPctPrice">15% Price</Th>
+						  <Th column="eigPctPrice">18% Price</Th>
+				        </Thead>
+				      </Table>			
+					</div>
+				</div>
 			</div>
 		  </div>
 		);
