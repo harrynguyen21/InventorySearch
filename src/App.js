@@ -44,8 +44,8 @@ class App extends Component {
 	  			snapshot.forEach((data)=> {
 	  				const item = data.val();
 	  				item['price'] = +(parseFloat(item['retailPriceVAT'].replace(',', '.')).toFixed(2));
-	  				item['fifPctPrice'] = +((0.15*item['price']).toFixed(2));
-	  				item['eigPctPrice'] = +((0.18*item['price']).toFixed(2));
+	  				item['fifPctPrice'] = +((0.85*item['price']).toFixed(2));
+	  				item['eigPctPrice'] = +((0.82*item['price']).toFixed(2));
 	  				items.push(item);
 	  			});
 			
@@ -125,6 +125,14 @@ class App extends Component {
 	}
 	
 	render() {
+		if (!firebase.auth().currentUser) {
+			return (
+				<div>
+					Please wait while you are being redirected to authentication service...
+				</div>
+			);
+		}
+		
 		return (
 		  <div className="container">
 			<div className="row">
