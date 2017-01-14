@@ -1,32 +1,25 @@
 import React, { Component } from 'react';
 import firebase from 'firebase';
+import { Link } from 'react-router';
+
 import logo from './logo.svg';
 import './App.css';
-
-import Reactable from 'reactable';
-
-var Table = Reactable.Table,
-    Thead = Reactable.Thead,
-    Th = Reactable.Th;
+import keys from './api_keys.js'
 
 class App extends Component {
 	
 	constructor(props) {
 		super(props);
 		
-		this.handleClick = this.handleClick.bind(this);
-		this.handleSearch = this.handleSearch.bind(this);
-		this.handleKeyChanged = this.handleKeyChanged.bind(this);
 		this.handleAuthenticationResult = this.handleAuthenticationResult.bind(this);
 		this.state = {
-			items: [],
 			username: ''
 		};
 	}
 	
 	componentWillMount() {
 		var config = {
-			apiKey: "AIzaSyDxZcpU8r64lzJzPYcw0J8MhbpGHZLE5Iw",
+			apiKey: keys.firebase,
 			authDomain: "inventorysearch-9682b.firebaseapp.com",
 			databaseURL: "https://inventorysearch-9682b.firebaseio.com",
 			storageBucket: "inventorysearch-9682b.appspot.com",
@@ -37,20 +30,6 @@ class App extends Component {
 		firebase.auth().onAuthStateChanged(function(user) {
 		  if ( user ) {
 			this.setState({username: user.displayName});
-			
-	  		this.firebaseRef = firebase.database().ref('items');
-	  		this.firebaseRef.on('value', (snapshot) => {
-	  			var items = [];
-	  			snapshot.forEach((data)=> {
-	  				const item = data.val();
-	  				item['price'] = +(parseFloat(item['retailPriceVAT'].replace(',', '.')).toFixed(2));
-	  				item['fifPctPrice'] = +((0.85*item['price']).toFixed(2));
-	  				item['eigPctPrice'] = +((0.82*item['price']).toFixed(2));
-	  				items.push(item);
-	  			});
-			
-	  			this.setState({items});
-	  		});
 		  } else {
 			  var provider = new firebase.auth.GoogleAuthProvider();
 			  firebase.auth().signInWithRedirect(provider);
@@ -77,52 +56,6 @@ class App extends Component {
 	  	  this.setState({username: user.displayName});
 	  }
 	}
-
-	handleClick() {
-		const name = this.name.value;
-		const code = this.code.value;
-		const price = this.price.value;
-
-		if (name && code && price) {
-			const item = {name, code, price};
-			this.firebaseRef.push(item);
-			this.code.value='';
-			this.name.value='';
-			this.price.value='';
-		}
-	}
-	
-	handleSearch() {
-		const key = this.searchKey.value;
-		if (key) {
-			this.firebaseRef.orderByChild('Code').equalTo(key).on('value', (snapshot) => {
-				var items = [];
-				snapshot.forEach((data)=> {					
-					items.push(data.val());
-				});
-			
-				this.setState({items});
-			});
-		}
-	}
-	
-	handleKeyChanged() {
-		const key = this.searchKey.value;
-		if (!key) {
-			this.firebaseRef.once('value', (snapshot) => {
-				var items = [];
-				snapshot.forEach((data)=> {
-					items.push(data.val());
-				});
-			
-				this.setState({items});
-			});
-		}
-	}
-	
-	getNoDataText() {
-		return this.state.items.length === 0 ? "Loading..." : "No matching records found";
-	}
 	
 	render() {
 		if (!firebase.auth().currentUser) {
@@ -141,25 +74,19 @@ class App extends Component {
 			      <h2>Welcome to Inventory Search, {this.state.username}</h2>
 			    </div>
 			</div>
-		    <div className="row">
+			<div className="row">
 				<div className="col-xs-12 col-md-12">
-					<div className="table-responsive">
-				      <Table className="table table-striped"
-						filterable={['Code', 'VmName']}
-				        noDataText={this.getNoDataText()}
-				        itemsPerPage={20}
-				        currentPage={0}
-				        sortable={true}
-				        data={this.state.items}>
-				        <Thead>
-				          <Th column="Code">Code</Th>
-				          <Th column="VmName">Name</Th>
-				          <Th column="price">Price</Th>
-						  <Th column="fifPctPrice">15% Price</Th>
-						  <Th column="eigPctPrice">18% Price</Th>
-				        </Thead>
-				      </Table>			
-					</div>
+					<h2></h2>
+					<ul className="nav nav-tabs">
+						<li role="presentation" ><Link to="/searchStats">Item Statistics<sup className="bg-danger">New</sup></Link></li>
+						<li role="presentation" ><Link to="/itemSearch2">Item Search<sup className="bg-danger">New</sup></Link></li>
+						<li role="presentation" ><Link to="/itemSearch">Item Search</Link></li>						
+					</ul>
+				</div>				
+			</div>
+			<div className="row">
+				<div className="col-xs-12 col-md-12">
+					{this.props.children}
 				</div>
 			</div>
 		  </div>

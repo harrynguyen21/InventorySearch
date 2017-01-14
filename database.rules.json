@@ -3,9 +3,20 @@
     ".read": "true",
     ".write": "true",
     "items": {
-      ".indexOn": [
-        "Code"
-      ]
-    }
+		".indexOn": [
+			"Code"
+		]
+    },
+	"searches": {
+	    ".indexOn": [
+		    "date",
+			"item"
+	    ]
+	},
+	"vendorprices": {
+		".indexOn": [
+			"Code"
+		]
+	}
   }
 }
