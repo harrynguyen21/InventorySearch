@@ -1,5 +1,6 @@
 {
   "projects": {
-    "default": "inventorysearch-9682b"
+    "default": "inventorysearch-9682b",
+    "prod": "inventorysearch-9682b"
   }
 }
